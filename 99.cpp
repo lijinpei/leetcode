@@ -1,5 +1,9 @@
-#include <iostream>
 #include <utility>
+#include <iostream>
+#include <sstream>
+#include <queue>
+#include <algorithm>
+#include <cstddef> // to bring in definition for NULL
 
 struct TreeNode {
     int val;
@@ -7,38 +11,46 @@ struct TreeNode {
     TreeNode *right;
     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
 };
-
-bool valid(TreeNode* p) {
-  return p && p != reinterpret_cast<TreeNode*>(-1ll);
-}
-
-void rotate(TreeNode* &L, TreeNode* &R, TreeNode* &P) {
-  std::swap(L, R);
-  std::swap(P, R);
-}
-
 class Solution {
-  int count = 0;
-
 public:
   void recoverTree(TreeNode *root) {
-    TreeNode *finish_mark = reinterpret_cast<TreeNode*>(-1ll);
-    TreeNode *p = root, *pa = finish_mark;
-    while (true) {
-      rotate(p->left, p->right, pa);
-      if (pa == finish_mark) {
-        break;
-      }
-      if (valid(pa->left)) {
-        if (!valid(pa->right) || (pa->right->val <= pa->left->val)) {
-          if (!valid(pa) || (pa->val >= pa->left->val)) {
-          std::cout << pa->val << std::endl;
-          }
+    TreeNode* last_p = root, *last_error = nullptr, *last_error1;
+    while (last_p->left) {
+      last_p = last_p->left;
+    }
+    auto visit = [&]() {
+      if (root->val < last_p->val) {
+        if (last_error) {
+          std::swap(last_error->val, root->val);
+          last_error = nullptr;
+        } else {
+          last_error = last_p;
+          last_error1 = root;
         }
       }
-      if (pa) {
-        std::swap(pa, p);
+      last_p = root;
+    };
+    while (root) {
+      TreeNode* prev = root->left;
+      if (!prev) {
+        visit();
+        root = root->right;
+      } else {
+        while (prev->right && prev->right != root) {
+          prev = prev->right;
+        }
+        if (prev->right) {
+          visit();
+          prev->right = nullptr;
+          root = root->right;
+        } else {
+          prev->right = root;
+          root = root->left;
+        }
       }
+    }
+    if (last_error) {
+      std::swap(last_error->val, last_error1->val);
     }
   }
 };
