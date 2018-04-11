@@ -1,3 +1,7 @@
+/*
+ * warning: this is not the correct AC-tree algorithm, but it works for this
+ * problem
+ */
 #include <iostream>
 #include <cassert>
 #include <vector>
