@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 class Solution {
 public:
@@ -16,187 +17,121 @@ public:
     if (!n) {
       return;
     }
-    dump();
-    bool fill_row = false;
-    for (int x = 0; x < n; ++x) {
-      if (!matrix[0][x]) {
-        fill_row = true;
-      }
-    }
-    bool fill_col = false;
-    for (int x = 0; x < m; ++x) {
-      if (!matrix[x][0]) {
-        fill_col = true;
+    bool need_fill_row = false, need_fill_col = false;
+    bool last_fill_row = false, last_fill_col = false;
+    for (int i = 0; i < n; ++i) {
+      if (!matrix[0][i]) {
+        need_fill_row = true;
       }
     }
     if (m == 1) {
-      if (fill_row) {
-        for (int x = 0; x < n; ++x) {
-          matrix[0][x] = 0;
+      if (need_fill_row) {
+        for (int i = 0; i < n; ++i) {
+          matrix[0][i] = 0;
         }
-        return;
+      }
+      return;
+    }
+    for (int i = 0; i < m; ++i) {
+      if (!matrix[i][0]) {
+        need_fill_col = true;
       }
     }
     if (n == 1) {
-      if (fill_col) {
-        for (int x = 0; x < m; ++x) {
-          matrix[x][0] = 0;
+      if (need_fill_col) {
+        for (int i = 0; i < m; ++i) {
+          matrix[i][0] = 0;
         }
-        return;
       }
+      return;
     }
-    int x = 0;
-    for (;x + 2 < m && x + 2 < n; ++x) {
-      if (fill_row || fill_col) {
-        matrix[x][x] = 0;
-      }
-      bool fill_row1 = false;
-      for (int p = x + 1; p < n; ++p) {
-        if (matrix[x][p]) {
-          if (matrix[x + 1][p]) {
-            continue;
-          } else {
-            fill_row1 = true;
-            for (int y = 0; y <= x; ++y) {
-              matrix[y][p] = 0;
+    for (int x = 0;; ++x) {
+      std::cout << (need_fill_row ? "true" : "false") << ' ';
+      std::cout << (need_fill_col ? "true" : "false") << ' ';
+      std::cout << std::endl;
+      bool need_fill_row1, need_fill_col1, last_fill_row1, last_fill_col1;
+      auto do_fill_row = [&]() {
+        if (need_fill_row) {
+          if (!last_fill_row) {
+            for (int y = 0; y < x; ++y) {
+              matrix[x][y] = 0;
             }
           }
-        } else {
-          if (matrix[x + 1][p]) {
-            matrix[x + 1][p] = 0;
-          } else {
-            fill_row1 = true;
-            continue;
+          for (int y = x; y < n; ++y) {
+            matrix[x][y] = 0;
           }
         }
-      }
-      bool fill_col1 = false;
-      for (int p = x + 1; p < m; ++p) {
-        if (matrix[p][x]) {
-          if (matrix[p][x + 1]) {
-            continue;
-          } else {
-            fill_col1 = true;
-            for (int y = 0; y <= x; ++y) {
-              matrix[p][y] = 0;
+      };
+      auto do_fill_col = [&]() {
+        if (need_fill_col) {
+          if (!last_fill_col) {
+            for (int y = 0; y < x; ++y) {
+              matrix[y][x] = 0;
             }
           }
-        } else {
-          if (matrix[p][x + 1]) {
-            matrix[p][x + 1] = 0;
-          } else {
-            fill_col1 = true;
-            continue;
+          for (int y = x; y < m; ++y) {
+            matrix[y][x] = 0;
           }
         }
-      }
-      if (fill_row) {
-        for (int i = x; i < n; ++i) {
-          matrix[x][i] = 0;
-        }
-      }
-      if (fill_row1) {
-        for (int i = 0; i <= x; ++i) {
-          matrix[x + 1][i] = 0;
-        }
-      }
-      fill_row = fill_row1;
-      if (fill_col) {
-        for (int i = x; i < m; ++i) {
-          matrix[i][x] = 0;
-        }
-      }
-      if (fill_col1) {
-        for (int i = 0; i < x; ++i) {
-          matrix[i][x + 1] = 0;
-        }
-      }
-      fill_col = fill_col1;
-      //dump();
-    }
-    if (fill_row || fill_col) {
-      matrix[x][x] = 0;
-    }
-    if (x + 2 == m) {
-      bool fill_row1 = false;
-      for (int p = x + 1; p < n; ++p) {
-        if (matrix[m - 2][p]) {
-          if (matrix[m - 1][p]) {
-            continue;
+      };
+      auto propogate_row = [&]() {
+        for (int p = x + 2; p < n; ++p) {
+          if (matrix[x][p]) {
+            if (matrix[x + 1][p]) {
+              continue;
+            } else {
+              need_fill_row1 = true;
+              for (int y = 0; y <= x; ++y) {
+                matrix[y][p] = 0;
+              }
+            }
           } else {
-            fill_row1 = true;
-            for (int x = 0; x + 1 < m; ++x) {
-              matrix[x][p] = 0;
+            if (matrix[x + 1][p]) {
+              matrix[x + 1][p] = 0;
+            } else {
+              need_fill_row1 = true;
             }
           }
-        } else {
-          if (matrix[m - 1][p]) {
-            matrix[m - 1][p] = 0;
+        }
+      };
+      auto propogate_col = [&]() {
+        for (int p = x + 2; p < m; ++p) {
+          if (matrix[p][x]) {
+            if (matrix[p][x + 1]) {
+              continue;
+            } else {
+              need_fill_col1 = true;
+              for (int y = 0; y <= x; ++y) {
+                matrix[p][y] = 0;
+              }
+            }
           } else {
-            fill_row1 = true;
-            continue;
-          }
-        }
-      }
-      if (!matrix[m - 1][x]) {
-        for (int p = x + 1; p < n; ++p) {
-          matrix[m - 1][p] = 0;
-        }
-      }
-      if (fill_row1) {
-        for (int p = 0; p < n; ++p) {
-          matrix[m - 1][p] = 0;
-        }
-      }
-      if (fill_row) {
-        for (int p = x; p < n; ++p) {
-          matrix[m - 2][p] = 0;
-        }
-      }
-      if (fill_col) {
-        matrix[x + 1][x] = 0;
-      }
-    } else {
-      bool fill_col1 = false;
-      for (int p = x + 1; p < m; ++p) {
-        if (matrix[p][x]) {
-          if (matrix[p][n - 1]) {
-            continue;
-          } else {
-            fill_col1 = true;
-            for (int x = 0; x + 1 < n; ++x) {
-              matrix[p][x] = 0;
+            if (matrix[p][x + 1]) {
+              matrix[p][x + 1] = 0;
+            } else {
+              need_fill_col1 = true;
             }
           }
-        } else {
-          if (matrix[p][n - 1]) {
-            matrix[p][n - 1] = 0;
-          } else {
-            fill_col1 = true;
-            continue;
-          }
         }
+      };
+      if (x + 1 == m || x + 1 == n) {
+        do_fill_row();
+        do_fill_col();
+        break;
       }
-      if (!matrix[x][n - 1]) {
-        for (int p = x + 1; p < m; ++p) {
-          matrix[p][n - 1] = 0;
-        }
-      }
-      if (fill_col1) {
-        for (int p = 0; p < m; ++p) {
-          matrix[p][n - 1] = 0;
-        }
-      }
-      if (fill_row) {
-        matrix[x][n - 1] = 0;
-      }
-      if (fill_col) {
-        for (int p = x + 1; p < m; ++p) {
-          matrix[x][p] = 0;
-        }
-      }
+      need_fill_row1 = !matrix[x + 1][x + 1] || !matrix[x + 1][x];
+      need_fill_col1 = !matrix[x + 1][x + 1] || !matrix[x][x + 1];
+      last_fill_row1 = !matrix[x + 1][x];
+      last_fill_col1 = !matrix[x][x + 1];
+      propogate_row();
+      propogate_col();
+      do_fill_row();
+      do_fill_col();
+      need_fill_row = need_fill_row1;
+      need_fill_col = need_fill_col1;
+      last_fill_row = last_fill_row1;
+      last_fill_col = last_fill_col1;
     }
-    dump();
   }
 };
 
